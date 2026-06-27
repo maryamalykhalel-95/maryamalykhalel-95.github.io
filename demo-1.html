@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>عرض تجريبي - بوت مركز الامل</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Segoe UI', Tahoma, 'Helvetica Neue', Arial, sans-serif;
+    background: #0b141a;
+    overflow: hidden;
+  }
+
+  .phone-wrap {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #0b141a;
+  }
+
+  /* ===== Header ===== */
+  .chat-header {
+    background: #202c33;
+    color: #e9edef;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,.3);
+    z-index: 5;
+  }
+  .chat-header .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00a884, #008069);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+    color: white;
+  }
+  .chat-header .info { flex: 1; min-width: 0; }
+  .chat-header .name {
+    font-size: 16.5px; font-weight: 600; line-height: 1.2;
+  }
+  .chat-header .status {
+    font-size: 12.5px; color: #8696a0; line-height: 1.3;
+  }
+  .chat-header .icons {
+    display: flex; gap: 18px; color: #aebac1; font-size: 19px;
+  }
+
+  /* ===== Chat area ===== */
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 8px;
+    background-color: #0b141a;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,0.015) 0%, transparent 50%),
+      radial-gradient(circle at 80% 90%, rgba(255,255,255,0.015) 0%, transparent 50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    scroll-behavior: smooth;
+  }
+  .day-chip {
+    align-self: center;
+    background: #182229;
+    color: #8696a0;
+    font-size: 12.5px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    margin: 8px 0 14px;
+  }
+
+  .bubble-row { display: flex; margin: 2px 6px; }
+  .bubble-row.bot { justify-content: flex-start; }
+  .bubble-row.user { justify-content: flex-end; }
+
+  .bubble {
+    max-width: 78%;
+    padding: 7px 9px 9px 9px;
+    border-radius: 8px;
+    font-size: 14.3px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    position: relative;
+    box-shadow: 0 1px 1px rgba(0,0,0,.3);
+    animation: pop .18s ease-out;
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .bubble.bot {
+    background: #202c33;
+    color: #e9edef;
+    border-top-right-radius: 8px;
+    border-top-left-radius: 2px;
+  }
+  .bubble.user {
+    background: #005c4b;
+    color: #e9edef;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 2px;
+  }
+  .bubble .meta-time {
+    display: block;
+    text-align: left;
+    font-size: 11px;
+    color: #8696a0;
+    margin-top: 4px;
+    direction: ltr;
+  }
+  .bubble.user .meta-time { color: #7fd9c4; }
+  .bubble.user .meta-time .tick { color: #53bdeb; margin-right: 2px; }
+
+  .menu-hint {
+    align-self: flex-start;
+    color: #8696a0;
+    font-size: 12px;
+    margin: 2px 14px 8px;
+  }
+
+  /* quick reply chips */
+  .quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 10px 4px;
+  }
+  .quick-chip {
+    background: #202c33;
+    color: #00a884;
+    border: 1px solid #2a3942;
+    padding: 7px 14px;
+    border-radius: 18px;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: background .15s;
+    white-space: nowrap;
+  }
+  .quick-chip:hover, .quick-chip:active {
+    background: #2a3942;
+  }
+
+  /* typing indicator */
+  .typing-row { display: flex; margin: 2px 6px; }
+  .typing-bubble {
+    background: #202c33;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border-top-left-radius: 2px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .typing-dot {
+    width: 6px; height: 6px;
+    background: #8696a0;
+    border-radius: 50%;
+    animation: blink 1.2s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: .2s; }
+  .typing-dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink {
+    0%, 80%, 100% { opacity: .3; }
+    40% { opacity: 1; }
+  }
+
+  /* ===== Input bar ===== */
+  .input-bar {
+    background: #202c33;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .input-bar input {
+    flex: 1;
+    background: #2a3942;
+    border: none;
+    outline: none;
+    color: #e9edef;
+    padding: 11px 16px;
+    border-radius: 22px;
+    font-size: 14.5px;
+    font-family: inherit;
+  }
+  .input-bar input::placeholder { color: #8696a0; }
+  .send-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: #00a884;
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform .1s;
+  }
+  .send-btn:active { transform: scale(.92); }
+  .send-btn svg { width: 20px; height: 20px; fill: #0b141a; }
+
+  /* badge banner */
+  .demo-banner {
+    background: #00a884;
+    color: #06231c;
+    text-align: center;
+    font-size: 12px;
+    padding: 5px 8px;
+    font-weight: 600;
+    letter-spacing: .2px;
+    flex-shrink: 0;
+  }
+
+  .chat-area::-webkit-scrollbar { width: 4px; }
+  .chat-area::-webkit-scrollbar-thumb { background: #2a3942; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="phone-wrap">
+  <div class="demo-banner">⚡ عرض تجريبي تفاعلي — بوت رد آلي لمركز الامل</div>
+
+  <div class="chat-header">
+    <div class="avatar">🌟</div>
+    <div class="info">
+      <div class="name">مركز الامل</div>
+      <div class="status" id="statusText">متصل الآن</div>
+    </div>
+    <div class="icons">📞 ⋮</div>
+  </div>
+
+  <div class="chat-area" id="chatArea">
+    <div class="day-chip">اليوم</div>
+  </div>
+
+  <div class="input-bar">
+    <input type="text" id="msgInput" placeholder="اكتب رسالة" autocomplete="off">
+    <button class="send-btn" id="sendBtn" aria-label="إرسال">
+      <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+const CENTER_NAME = "مركز الامل";
+
+const WELCOME_MSG = `أهلاً بيك في ${CENTER_NAME} 🌟
+
+من فضلك اختر رقم من القايمة:
+
+1️⃣ حجز موعد جديد
+2️⃣ الاستفسار عن الخدمات والأسعار
+3️⃣ مواعيد العمل والموقع
+4️⃣ التحدث مع أحد فريقنا`;
+
+const BOOKING_MSG = `لحجز موعد جديد، من فضلك ابعت لنا البيانات التالية في رسالة واحدة:
+
+• اسم الطفل
+• السن
+• نوع الخدمة المطلوبة (تخاطب / تقييم / علاج سلوكي)
+• الأوقات المناسبة ليك
+
+وسيتواصل معك فريقنا لتأكيد الموعد في أقرب وقت 📅`;
+
+const SERVICES_MSG = `خدماتنا في المركز تشمل:
+
+🔹 جلسات تخاطب فردية
+🔹 تقييم شامل لحالة الطفل
+🔹 علاج سلوكي
+🔹 جلسات تأهيل حركي
+
+للأسعار التفصيلية، فضّل تتواصل مع فريقنا مباشرة لأن الأسعار بتختلف حسب نوع الخدمة وعدد الجلسات.
+
+اضغط 4 للتحدث مع الفريق، أو 0 للرجوع للقائمة الرئيسية.`;
+
+const HOURS_MSG = `🕐 مواعيد العمل: من السبت إلى الخميس - 9 صباحًا إلى 5 مساءً
+📍 العنوان: [يتم إضافة العنوان هنا]
+📞 تليفون المركز: [رقم التليفون]
+
+اضغط 0 للرجوع للقائمة الرئيسية.`;
+
+const HUMAN_MSG = `تم تحويلك لفريقنا المختص 💙
+أحد أعضاء الفريق هيتواصل معاك في أقرب وقت ممكن.
+
+(أي استفسار يخص تشخيص أو خطة علاج طفل معين، فريقنا المختص هو الأنسب للرد عليه)`;
+
+const SENSITIVE_MSG = `حسيت إن سؤالك يخص حالة طفلك بشكل مباشر، وده شيء فريقنا المختص هو الأنسب للرد عليه بدقة 💙
+
+تم تحويلك لفريقنا المختص، وهيتواصل معاك في أقرب وقت ممكن.`;
+
+const FALLBACK_MSG = `معلش، مش فاهم طلبك 🤔
+من فضلك اختر رقم من القايمة:
+1️⃣ حجز موعد   2️⃣ الخدمات والأسعار   3️⃣ المواعيد والموقع   4️⃣ التحدث مع الفريق`;
+
+const SENSITIVE_KEYWORDS = ["تشخيص","حالة ابني","حالة بنتي","متاخر","توحد","اوتيزم","مش بيتكلم","عنده مشكلة","عندها مشكلة","خايف عليه","خايفة عليه","قلقانة","قلقان"];
+
+function detectSensitive(text) {
+  return SENSITIVE_KEYWORDS.some(k => text.includes(k));
+}
+
+function getResponse(raw) {
+  const text = raw.trim();
+  if (detectSensitive(text)) return { msg: SENSITIVE_MSG, chips: ["0"] };
+  if (["1","حجز","حجز موعد"].includes(text)) return { msg: BOOKING_MSG, chips: ["0"] };
+  if (["2","خدمات","اسعار","أسعار"].includes(text)) return { msg: SERVICES_MSG, chips: ["4","0"] };
+  if (["3","مواعيد","موقع","العنوان"].includes(text)) return { msg: HOURS_MSG, chips: ["0"] };
+  if (["4","فريق","موظف","تحدث"].includes(text)) return { msg: HUMAN_MSG, chips: ["0"] };
+  if (["0","رجوع","قائمة","menu"].includes(text)) return { msg: WELCOME_MSG, chips: ["1","2","3","4"] };
+  if (["hi","hello","السلام عليكم","مرحبا","أهلا","اهلا"].includes(text)) return { msg: WELCOME_MSG, chips: ["1","2","3","4"] };
+  return { msg: FALLBACK_MSG, chips: ["1","2","3","4"] };
+}
+
+const chatArea = document.getElementById('chatArea');
+const msgInput = document.getElementById('msgInput');
+const sendBtn = document.getElementById('sendBtn');
+const statusText = document.getElementById('statusText');
+
+function timeNow() {
+  const d = new Date();
+  let h = d.getHours(), m = d.getMinutes();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${h}:${m.toString().padStart(2,'0')} ${ampm}`;
+}
+
+function addBubble(text, sender) {
+  const row = document.createElement('div');
+  row.className = `bubble-row ${sender}`;
+  const bubble = document.createElement('div');
+  bubble.className = `bubble ${sender}`;
+  bubble.innerHTML = escapeHtml(text) +
+    `<span class="meta-time">${sender === 'user' ? '<span class=\"tick\">✓✓</span>' : ''}${timeNow()}</span>`;
+  row.appendChild(bubble);
+  chatArea.appendChild(row);
+  scrollDown();
+}
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
+}
+
+function scrollDown() {
+  requestAnimationFrame(() => { chatArea.scrollTop = chatArea.scrollHeight; });
+}
+
+function showTyping() {
+  const row = document.createElement('div');
+  row.className = 'typing-row';
+  row.id = 'typingRow';
+  row.innerHTML = `<div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  chatArea.appendChild(row);
+  scrollDown();
+  statusText.textContent = 'يكتب الآن...';
+}
+
+function hideTyping() {
+  const row = document.getElementById('typingRow');
+  if (row) row.remove();
+  statusText.textContent = 'متصل الآن';
+}
+
+function renderChips(chips) {
+  const labels = { "1":"1️⃣ حجز موعد", "2":"2️⃣ الخدمات والأسعار", "3":"3️⃣ المواعيد والموقع", "4":"4️⃣ التحدث مع الفريق", "0":"0️⃣ رجوع للقائمة" };
+  const wrap = document.createElement('div');
+  wrap.className = 'quick-replies';
+  chips.forEach(c => {
+    const chip = document.createElement('div');
+    chip.className = 'quick-chip';
+    chip.textContent = labels[c] || c;
+    chip.onclick = () => sendMessage(c);
+    wrap.appendChild(chip);
+  });
+  chatArea.appendChild(wrap);
+  scrollDown();
+}
+
+function clearChips() {
+  document.querySelectorAll('.quick-replies').forEach(el => el.remove());
+}
+
+function sendMessage(forcedText) {
+  const text = forcedText !== undefined ? forcedText : msgInput.value.trim();
+  if (!text) return;
+  clearChips();
+  addBubble(text, 'user');
+  msgInput.value = '';
+
+  showTyping();
+  const delay = 550 + Math.random() * 500;
+  setTimeout(() => {
+    hideTyping();
+    const { msg, chips } = getResponse(text);
+    addBubble(msg, 'bot');
+    if (chips && chips.length) renderChips(chips);
+  }, delay);
+}
+
+sendBtn.addEventListener('click', () => sendMessage());
+msgInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+// Kick off with the welcome message automatically
+window.addEventListener('load', () => {
+  showTyping();
+  setTimeout(() => {
+    hideTyping();
+    addBubble(WELCOME_MSG, 'bot');
+    renderChips(["1","2","3","4"]);
+  }, 700);
+});
+</script>
+
+</body>
+</html>
